@@ -3,3 +3,4 @@
 my-grader-report.*
 my-submission.*
 /.grader/
+/.settings/
