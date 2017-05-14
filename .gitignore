@@ -1,0 +1,5 @@
+.DS_Store
+/bin/
+my-grader-report.*
+my-submission.*
+/.grader/
