@@ -38,6 +38,12 @@ public interface Square {
         return false;
     }
     
+    public void setCount(int count);
+    
+    public int getCount();
+    
+    public void decrementCount();
+    
     @Override public String toString();
     
 }

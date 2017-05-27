@@ -28,6 +28,10 @@ public class MinesweeperServer {
     private final ServerSocket serverSocket;
     /** True if the server should *not* disconnect a client after a BOOM message. */
     private final boolean debug;
+    
+    private Board board;
+    
+    private int numberOfUsers;
 
     // TODO: Abstraction function, rep invariant, rep exposure
 
@@ -38,9 +42,11 @@ public class MinesweeperServer {
      * @param debug debug mode flag
      * @throws IOException if an error occurs opening the server socket
      */
-    public MinesweeperServer(int port, boolean debug) throws IOException {
+    public MinesweeperServer(int port, boolean debug, Board board) throws IOException {
         serverSocket = new ServerSocket(port);
         this.debug = debug;
+        this.board = board;
+        this.numberOfUsers = 0;
     }
 
     /**
@@ -54,6 +60,8 @@ public class MinesweeperServer {
         while (true) {
             // block until a client connects
             Socket socket = serverSocket.accept();
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            
 
             // handle the client
             Thread handler = new Thread(new Runnable() {
@@ -66,7 +74,7 @@ public class MinesweeperServer {
                         }
                     }
                     catch (IOException ioe) {
-                        ioe.printStackTrace(); // but don't terminate serve()
+                        //ioe.printStackTrace(); // but don't terminate serve()
                     }
                 }
             });
@@ -85,16 +93,31 @@ public class MinesweeperServer {
     private void handleConnection(Socket socket) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
+        
+        numberOfUsers +=1; 
+        String format = "Welcome to Minesweeper. Players: %d incuding you. Board: %d columns by %d rows. Type 'help' for help.";
+        String welcomeMessage = String.format(format, numberOfUsers, board.getCols(), board.getRows());
+        out.println(welcomeMessage);        
         try {
             for (String line = in.readLine(); line != null; line = in.readLine()) {
                 String output = handleRequest(line);
                 if (output != null) {
-                    // TODO: Consider improving spec of handleRequest to avoid use of null
+                    // TODO: Consider improving spec of handleRequest to avoid use of null                    
                     out.println(output);
+                    if (output.equals(board.BOOM_MESSAGE) && !debug) {    
+                        numberOfUsers -= 1;
+                        out.close();
+                        in.close();
+                    }                   
+                }
+                else {
+                    numberOfUsers -= 1;
+                    out.close();
+                    in.close();
                 }
             }
         } finally {
+            numberOfUsers = 0;
             out.close();
             in.close();
         }
@@ -112,31 +135,31 @@ public class MinesweeperServer {
                      + "(dig -?\\d+ -?\\d+)|(flag -?\\d+ -?\\d+)|(deflag -?\\d+ -?\\d+)";
         if ( ! input.matches(regex)) {
             // invalid input
-            // TODO Problem 5
+            input = "help";
         }
         String[] tokens = input.split(" ");
         if (tokens[0].equals("look")) {
             // 'look' request
-            return "good";
-            // TODO Problem 5
+            return board.toString();
+            
         } else if (tokens[0].equals("help")) {
             // 'help' request
-            // TODO Problem 5
+            return "RTFM!";
         } else if (tokens[0].equals("bye")) {
-            // 'bye' request
-            // TODO Problem 5
+            return null;
         } else {
             int x = Integer.parseInt(tokens[1]);
             int y = Integer.parseInt(tokens[2]);
             if (tokens[0].equals("dig")) {
                 // 'dig x y' request
-                // TODO Problem 5
+                return board.dig(x, y);
+                
             } else if (tokens[0].equals("flag")) {
                 // 'flag x y' request
-                // TODO Problem 5
+                return board.flag(x, y);
             } else if (tokens[0].equals("deflag")) {
                 // 'deflag x y' request
-                // TODO Problem 5
+                return board.deflag(x, y);
             }
         }
         // TODO: Should never get here, make sure to return in each of the cases above
@@ -260,8 +283,18 @@ public class MinesweeperServer {
     public static void runMinesweeperServer(boolean debug, Optional<File> file, int sizeX, int sizeY, int port) throws IOException {
         
         // TODO: Continue implementation here in problem 4
+        Board board = null;
+        if (file.isPresent()) {
+            File f = file.get();
+            FileReader fr = new FileReader(f);
+            BufferedReader br = new BufferedReader(fr);
+            board = new Board(br);
+        }
+        else {
+            board = new Board(sizeX, sizeY);
+        }
         
-        MinesweeperServer server = new MinesweeperServer(port, debug);
+        MinesweeperServer server = new MinesweeperServer(port, debug, board);
         
         server.serve();
     }

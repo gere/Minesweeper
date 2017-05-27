@@ -1,6 +1,6 @@
 package minesweeper;
 
-public class Flagged implements Square {
+public class Flagged extends AbstractSquare implements Square {
 
     private final boolean bomb;
     

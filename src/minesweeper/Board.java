@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class Board {
     
+    public final String BOOM_MESSAGE = "BOOM!\r\n";
+    
     // TODO: Abstraction function, rep invariant, rep exposure, thread safety
     
     // TODO: Specify, test, and implement in problem 2
@@ -42,6 +44,16 @@ public class Board {
                board[row][col] = new Untouched(hasBomb);
            }
        }
+       for(int row = 0; row < rows; row++) {
+           for (int col = 0; col < cols; col++) {
+               List<Coordinate> neighbors = getNeighbors(col, row);
+               int bombsInNeighbors = 0;
+               for (Coordinate c : neighbors) {
+                   if (board[c.row][c.col].hasBomb()) bombsInNeighbors++;
+               }
+               board[row][col].setCount(bombsInNeighbors);
+           }
+       }
     }
     public Board(BufferedReader in) throws IOException{
         
@@ -62,24 +74,54 @@ public class Board {
                 col++;
             }
             row++;
-        }       
+        } 
+        for(row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                List<Coordinate> neighbors = getNeighbors(col, row);
+                int bombsInNeighbors = 0;
+                for (Coordinate c : neighbors) {
+                    if (board[c.row][c.col].hasBomb()) bombsInNeighbors++;
+                }
+                board[row][col].setCount(bombsInNeighbors);
+            }
+        }
     }  
     
-    public String dig(int col, int row) {
+    public int getRows() {
+        return rows;
+    }
+    
+    public int getCols() {
+        return cols;
+    }
+    
+    synchronized public String dig(int col, int row) {
+        String message = null;
         if (checkCoordinates(col, row)) {
             Square sq = board[row][col];
             if (sq.isUntouched()) {
-                if (sq.hasBomb()) boom(col, row);
-                else {
-                    board[row][col] = new Dug();
+                int oldCount = sq.getCount();
+                board[row][col] = new Dug();
+                board[row][col].setCount(oldCount);
+                if (sq.hasBomb()) {
+                    message = BOOM_MESSAGE;                    
+                    List<Coordinate> neighbors = getNeighbors(col, row);
+                    for (Coordinate c : neighbors) {
+                        board[c.row][c.col].decrementCount();
+                    }
+                    
+                }
+                else {                    
+                    
                     checkAndDigNeighbors(col, row);
                 }
             }
-        }        
-        return this.toString();
+        }
+        message = message == null ? this.toString() : message;
+        return message;
     }
     
-    public String flag(int col, int row) {
+    synchronized public String flag(int col, int row) {
         if (checkCoordinates(col, row)) {
             Square sq = board[row][col];
             if (sq.isUntouched()) board[row][col] = sq.flag();
@@ -87,7 +129,7 @@ public class Board {
         return this.toString();
     }
     
-    public String deflag(int col, int row) {
+    synchronized public String deflag(int col, int row) {
         if (checkCoordinates(col, row)) {
             Square sq = board[row][col];
             if (sq.isFlagged()) board[row][col] = sq.deflag();
@@ -95,7 +137,7 @@ public class Board {
         return this.toString();
     }
     
-    private void checkAndDigNeighbors(int col, int row) {
+    synchronized private void checkAndDigNeighbors(int col, int row) {
         List<Coordinate> neighbors = getNeighbors(col, row);
         List<Coordinate> toCheck = new ArrayList<Coordinate>();
         boolean noBombsInNeighbors = true;
@@ -111,7 +153,9 @@ public class Board {
         }
         if (noBombsInNeighbors) {
             for (Coordinate c : toCheck) {
+                int oldCount = board[c.row][c.col].getCount();
                 board[c.row][c.col] = new Dug();
+                board[c.row][c.col].setCount(oldCount);
                 checkAndDigNeighbors(c.col, c.row);
             }
         }
@@ -146,7 +190,7 @@ public class Board {
     }
     
     @Override 
-    public String toString() {
+    synchronized public String toString() {
         String result = "";
         for(int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
@@ -154,7 +198,7 @@ public class Board {
                 String strSq = sq.toString();            
                 result += (col == 0) ? strSq : String.format(" %s", strSq);
             }
-            result += '\n';
+            if (row < rows -1 )result += '\n';
         }
         return result;
     }

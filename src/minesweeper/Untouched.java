@@ -1,6 +1,6 @@
 package minesweeper;
 
-public class Untouched implements Square {
+public class Untouched extends AbstractSquare implements Square {
     
     private final boolean bomb;
 

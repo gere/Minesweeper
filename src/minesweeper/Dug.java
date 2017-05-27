@@ -1,6 +1,6 @@
 package minesweeper;
 
-public class Dug implements Square {
+public class Dug extends AbstractSquare implements Square {
 
     @Override
     public Square dig() {
@@ -27,7 +27,7 @@ public class Dug implements Square {
     
     @Override
     public String toString() {
-        return " ";
+         return (this.count == 0) ?  " " :  Integer.toString(this.count);
     }
     
     @Override
