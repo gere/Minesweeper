@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class Board {
     
-    public final String BOOM_MESSAGE = "BOOM!\r\n";
+    public final String BOOM_MESSAGE = "BOOM!";
     
     // TODO: Abstraction function, rep invariant, rep exposure, thread safety
     
@@ -111,10 +111,10 @@ public class Board {
                     }
                     
                 }
-                else {                    
-                    
-                    checkAndDigNeighbors(col, row);
-                }
+                // always check after a boom. If debug, that's the thing to do.
+                // If not, the boom message disconnects, so no harm's done.
+                checkAndDigNeighbors(col, row);
+                
             }
         }
         message = message == null ? this.toString() : message;
