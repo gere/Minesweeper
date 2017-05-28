@@ -95,7 +95,7 @@ public class MinesweeperServer {
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         
         numberOfUsers +=1; 
-        String format = "Welcome to Minesweeper. Players: %d incuding you. Board: %d columns by %d rows. Type 'help' for help.";
+        String format = "Welcome to Minesweeper. Players: %d including you. Board: %d columns by %d rows. Type 'help' for help.";
         String welcomeMessage = String.format(format, numberOfUsers, board.getCols(), board.getRows());
         out.println(welcomeMessage);        
         try {
@@ -291,7 +291,7 @@ public class MinesweeperServer {
             board = new Board(br);
         }
         else {
-            board = new Board(sizeX, sizeY);
+            board = new Board(sizeY, sizeX);
         }
         
         MinesweeperServer server = new MinesweeperServer(port, debug, board);
